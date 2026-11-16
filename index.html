@@ -360,6 +360,8 @@ if('serviceWorker' in navigator){
   .p3-num{font-size:46px;font-weight:900;}
   .p3-kan{font-size:56px;font-weight:400;line-height:1;font-family:"Hiragino Sans","Noto Sans CJK JP","Noto Sans JP","Yu Gothic","PingFang SC","Microsoft YaHei",sans-serif;}
   .p3-svg{width:88%;height:88%;fill:var(--rojo);}
+  .p3-seg{width:52%;height:80%;}
+  #p3Preload{position:absolute;left:-9999px;top:0;opacity:0;pointer-events:none;}
   .p3-ex{flex:none;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border:3px solid var(--negro);border-radius:10px;background:#fff;font:900 26px Arial,sans-serif;}
   .p3-ex .p3-kan{font-size:34px;}
 </style>
@@ -408,7 +410,7 @@ if('serviceWorker' in navigator){
           <button class="start-btn rank-btn" ontouchend="event.stopPropagation();" onclick="showRanking()" aria-label="Ranking"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 13.5v7.5M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 4H4v2a3 3 0 0 0 3 3M17 4h3v2a3 3 0 0 1-3 3"/></svg></button>
         </div>
       </div>
-  <div class="app-ver" style="margin-top:6px;padding-top:0;">v2</div>
+  <div class="app-ver" style="margin-top:6px;padding-top:0;">v3</div>
   <div id="user-name-bar" style="margin-top:8px;">
     <div style="display:flex;width:200px;gap:0;margin:0 auto;">
       <input id="user-ini-input" type="text" maxlength="3" placeholder="INI"
@@ -1670,7 +1672,19 @@ var P3_PAIRS=[['未','末'],['土','士'],['己','已'],['人','入'],['大','�
 function isX2(){ return false; }   /* Processing 3 no tiene x2 (de momento) */
 function p3Limit(n){ return Math.max(P3_LIM_MIN, P3_LIM_START-P3_LIM_STEP*n); }
 function p3Rand(n){ return Math.floor(Math.random()*n); }
-function p3Word(ask){ return {menor:'Menor',mayor:'Mayor',medio:'Intermedio',dif:'Diferente'}[ask]; }
+function p3Word(ask){ return {menor:'Menor',mayor:'Mayor',medio:'Intermedio',dif:'Diferente',igual:'Igual'}[ask]; }
+function p3Ok(d,i){ return Array.isArray(d.ans)?d.ans.indexOf(i)>=0:i===d.ans; }
+/* v3: Normal = cifras 1-9 en estilo de pantalla de 7 segmentos con los segmentos apagados en gris (como un marcador real): 1/7, 3/8/9, 5/6, 2/5 se confunden.
+   Siempre sale al menos una pareja de las que se confunden. */
+var P3_SEG={1:'bc',2:'abged',3:'abgcd',4:'fgbc',5:'afgcd',6:'afgedc',7:'abc',8:'abcdefg',9:'abcdfg'};
+var P3_CONF=[[1,7],[3,8],[5,6],[2,5],[8,9],[6,8],[3,9],[4,9],[2,3],[5,9]];
+function p3SegSVG(n){
+  var on=P3_SEG[n], segs={a:[16,4,44,10],g:[16,47,44,10],d:[16,90,44,10],f:[6,12,10,37],b:[60,12,10,37],e:[6,55,10,37],c:[60,55,10,37]}, h='', k, q;
+  for(k in segs){ q=segs[k];
+    h+='<rect x="'+q[0]+'" y="'+q[1]+'" width="'+q[2]+'" height="'+q[3]+'" rx="5" fill="'+(on.indexOf(k)>=0?'#111':'#dcdcdc')+'"/>';
+  }
+  return '<svg viewBox="0 0 76 104" class="p3-seg">'+h+'</svg>';
+}
 function p3ShapeSVG(type,s){
   var r=45*s, c=50, h;
   if(type==='circulo') h='<circle cx="50" cy="50" r="'+r.toFixed(1)+'"/>';
@@ -1684,10 +1698,15 @@ function p3Make(mode){
   var kind='num';
   if(mode!=='normal'){ var k=p3Rand(3); kind=k===0?'num':(k===1?'fig':'kan'); }
   var ask='menor';
-  if(kind==='kan') ask='dif';
+  if(kind==='kan') ask=(mode==='limite' && Math.random()<0.5)?'igual':'dif';
   else if(mode==='limite') ask=['menor','mayor','medio'][p3Rand(3)];
   var vals=[], i, items=[], ans;
-  if(kind==='num'){
+  if(kind==='num' && mode==='normal'){
+    var cp=P3_CONF[p3Rand(P3_CONF.length)]; vals=cp.slice();
+    while(vals.length<3){ var v1=1+p3Rand(9); if(vals.indexOf(v1)<0) vals.push(v1); }
+    vals=shuffleArr(vals);
+    for(i=0;i<3;i++) items.push(p3SegSVG(vals[i]));
+  } else if(kind==='num'){
     while(vals.length<3){ var v=10+p3Rand(90); if(vals.indexOf(v)<0) vals.push(v); }
     for(i=0;i<3;i++) items.push('<span class="p3-num">'+vals[i]+'</span>');
   } else if(kind==='fig'){
@@ -1697,6 +1716,7 @@ function p3Make(mode){
     var pr=P3_PAIRS[p3Rand(P3_PAIRS.length)], odd=p3Rand(2), same=pr[1-odd], diff=pr[odd];
     ans=p3Rand(3);
     for(i=0;i<3;i++) items.push('<span class="p3-kan">'+(i===ans?diff:same)+'</span>');
+    if(ask==='igual') ans=[0,1,2].filter(function(j){ return j!==ans; });   /* vale cualquiera de las dos iguales */
     return {kind:kind, ask:ask, items:items, ans:ans};
   }
   var sorted=vals.slice().sort(function(a,b){ return a-b; });
@@ -1724,13 +1744,24 @@ function startCountdown(n, cb){
   }
   step(n);
 }
+/* v3 (2026-11-16): la barra de Limite ya no es una transicion CSS de width (se congelaba si el movil iba cargado): se pinta en cada
+   fotograma segun el tiempo real (transform, sin recalcular la pagina) y el mismo bucle corta el estimulo al agotarse el tiempo;
+   el setTimeout queda de respaldo por si el bucle no corre. */
 function p3LimBar(ms){
   var p=$('prog'); if(!p) return;
-  p.style.transition='none'; p.style.width='100%';
-  void p.offsetWidth;
-  if(ms>0){ p.style.transition='width '+ms+'ms linear'; p.style.width='0%'; }
+  S.limMs=ms; p.style.transition='none'; p.style.width='100%'; p.style.transformOrigin='left center'; p.style.transform='scaleX(1)';
+  if(S.limRaf) cancelAnimationFrame(S.limRaf);
+  S.limRaf=requestAnimationFrame(p3LimLoop);
 }
-function p3LimBarStop(){ var p=$('prog'); if(p){ var w=getComputedStyle(p).width; p.style.transition='none'; p.style.width=w; } }
+function p3LimLoop(){
+  S.limRaf=0;
+  if(!S.running || S.mode!=='limite' || !S.stimVisible) return;
+  var el=performance.now()-S.trialT0, p=$('prog');
+  if(p) p.style.transform='scaleX('+Math.max(0,1-el/S.limMs).toFixed(4)+')';
+  if(el>=S.limMs){ onStimTimeout(); return; }
+  S.limRaf=requestAnimationFrame(p3LimLoop);
+}
+function p3LimBarStop(){ if(S.limRaf){ cancelAnimationFrame(S.limRaf); S.limRaf=0; } }
 function runGame(){
   if(S.countIv){ clearInterval(S.countIv); S.countIv=0; }
   if(S.coverTo){ clearTimeout(S.coverTo); S.coverTo=0; }
@@ -1738,7 +1769,7 @@ function runGame(){
   show('game');
   S.trial=0; S.times=[]; S.running=true; S.lock=false; S.cur=null; S.stimVisible=false; S.armed=false; S.lastAct=0;
   hideStim();
-  var pr=$('prog'); if(pr){ pr.style.transition='none'; pr.style.width='0%'; }
+  var pr=$('prog'); if(pr){ pr.style.transition='none'; pr.style.transform=''; pr.style.width=S.mode==='limite'?'100%':'0%'; }
   $('stLast').textContent='--';
   $('stAvg').classList.remove('blink');
   if(S.mode==='limite'){
@@ -1776,19 +1807,22 @@ function scheduleNext(first){
 function showStim(){
   S.coverTo=0;
   var d=p3Make(S.mode); S.curDesc=d;
-  var box=$('stimBox'); box.className='stim-box p3-word p3-on';
-  $('stimGlyph').textContent=p3Word(d.ask);
+  var box=$('stimBox'), lim=S.mode==='limite';
+  box.className='stim-box p3-word'+(lim?' p3-on':'');   /* v3: Normal y Extremo siempre piden el menor (o el diferente): sin palabra */
+  $('stimGlyph').textContent=lim?p3Word(d.ask):'';
   p3Squares(d.items);
   S.stimVisible=true; S.armed=false;
   S.trialT0=performance.now();
   if(S.limitTo){ clearTimeout(S.limitTo); }
   var tmo=S.mode==='limite'?p3Limit(S.trial):(S.mode==='extremo'?P3_SLOW_X:P3_SLOW_N);
   if(S.mode==='limite') p3LimBar(tmo);
-  S.limitTo=setTimeout(onStimTimeout, tmo);
+  S.limitTo=setTimeout(onStimTimeout, tmo+(S.mode==='limite'?150:0));
 }
 function onStimTimeout(){
-  S.limitTo=0;
-  if(S.mode==='limite'){ p3LimBarStop(); finishLimite('limit'); }
+  if(S.limitTo){ clearTimeout(S.limitTo); S.limitTo=0; }
+  if(!S.running || !S.stimVisible) return;   /* ya resuelto (bucle y temporizador de respaldo) */
+  S.stimVisible=false;
+  if(S.mode==='limite'){ p3LimBarStop(); var p=$('prog'); if(p) p.style.transform='scaleX(0)'; finishLimite('limit'); }
   else tooSlow();
 }
 function onPick(pos){
@@ -1802,8 +1836,9 @@ function onPick(pos){
   }
   var rt=now-S.trialT0, i=parseInt(pos,10);
   if(S.limitTo){ clearTimeout(S.limitTo); S.limitTo=0; }
+  if(S.mode==='limite'){ p3LimBarStop(); if(rt>S.limMs){ S.stimVisible=false; finishLimite('limit'); return; } }
   if(rt<200){ failGame('guess', rt); return; }
-  if(i!==S.curDesc.ans){
+  if(!p3Ok(S.curDesc,i)){
     if(S.mode==='limite'){ p3LimBarStop(); S.p3Why='wrong'; sndFail(); finishLimite('wrong'); }
     else failGame('wrong');
     return;
@@ -1847,9 +1882,9 @@ function padHandler(e){
 function p3InfoHTML(mode){
   var h='<div class="info-title">Modo '+(mode==='limite'?'L&iacute;mite':'Extremo')+'</div>'
     +'<div class="info-sub">Salen 3 cuadrados. Arriba se indica cu&aacute;l hay que pulsar:</div>'
-    +'<div class="info-row"><div class="p3-ex">27</div><div class="info-text"><b>N&uacute;meros</b>: '+(mode==='limite'?'el <b>mayor</b>, el <b>menor</b> o el <b>intermedio</b>, seg&uacute;n diga arriba.':'pulsa el <b>menor</b>.')+'</div></div>'
+    +'<div class="info-row"><div class="p3-ex">27</div><div class="info-text"><b>N&uacute;meros</b> (de 2 cifras): '+(mode==='limite'?'el <b>mayor</b>, el <b>menor</b> o el <b>intermedio</b>, seg&uacute;n diga arriba.':'pulsa el <b>menor</b>.')+'</div></div>'
     +'<div class="info-row"><div class="p3-ex">'+p3ShapeSVG('triangulo',0.6)+'</div><div class="info-text"><b>Figuras</b> (cuadrados, c&iacute;rculos, tri&aacute;ngulos, rombos): '+(mode==='limite'?'la <b>mayor</b>, la <b>menor</b> o la <b>intermedia</b>.':'pulsa la <b>m&aacute;s peque&ntilde;a</b>.')+'</div></div>'
-    +'<div class="info-row"><div class="p3-ex"><span class="p3-kan">未</span></div><div class="info-text"><b>Caracteres</b>: dos son iguales y uno tiene una peque&ntilde;a diferencia: pulsa el <b>diferente</b>.</div></div>';
+    +'<div class="info-row"><div class="p3-ex"><span class="p3-kan">未</span></div><div class="info-text"><b>Caracteres</b>: dos son iguales y uno tiene una peque&ntilde;a diferencia: '+(mode==='limite'?'pulsa el <b>diferente</b> o uno de los <b>iguales</b>, seg&uacute;n diga arriba.':'pulsa el <b>diferente</b>.')+'</div></div>';
   if(mode==='limite') h+='<div class="info-sub">Empiezas con '+(P3_LIM_START/1000)+' s por est&iacute;mulo y cada acierto te quita '+P3_LIM_STEP+' ms, hasta '+P3_LIM_MIN+' ms. Acaba al fallar o al agotarse el tiempo. Cuenta los aciertos.</div>';
   else h+='<div class="info-sub">Un fallo anula la partida.</div>';
   return h;
@@ -1890,6 +1925,7 @@ function showRanking(){
 }
 
 $('segModo').addEventListener('click', p3ModeUI); p3ModeUI();
+(function(){ var d=document.createElement('div'); d.id='p3Preload'; d.className='p3-kan'; d.textContent=P3_PAIRS.map(function(p){ return p[0]+p[1]; }).join(' '); document.body.appendChild(d); })();   /* precarga la fuente de los caracteres antes de jugar */
 
 function unlockAudio(){ audioCtx(); document.removeEventListener('touchstart',unlockAudio); document.removeEventListener('mousedown',unlockAudio); }
 document.addEventListener('touchstart',unlockAudio,{passive:true});
