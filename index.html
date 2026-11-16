@@ -360,7 +360,7 @@ if('serviceWorker' in navigator){
   .p3-num{font-size:46px;font-weight:900;}
   .p3-kan{font-size:56px;font-weight:400;line-height:1;font-family:"Hiragino Sans","Noto Sans CJK JP","Noto Sans JP","Yu Gothic","PingFang SC","Microsoft YaHei",sans-serif;}
   .p3-svg{width:88%;height:88%;fill:var(--rojo);}
-  .p3-seg{width:52%;height:80%;}
+  .p3-seg{width:90%;height:90%;}
   #p3Preload{position:absolute;left:-9999px;top:0;opacity:0;pointer-events:none;}
   .p3-ex{flex:none;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border:3px solid var(--negro);border-radius:10px;background:#fff;font:900 26px Arial,sans-serif;}
   .p3-ex .p3-kan{font-size:34px;}
@@ -410,7 +410,7 @@ if('serviceWorker' in navigator){
           <button class="start-btn rank-btn" ontouchend="event.stopPropagation();" onclick="showRanking()" aria-label="Ranking"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 13.5v7.5M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 4H4v2a3 3 0 0 0 3 3M17 4h3v2a3 3 0 0 1-3 3"/></svg></button>
         </div>
       </div>
-  <div class="app-ver" style="margin-top:6px;padding-top:0;">v4</div>
+  <div class="app-ver" style="margin-top:6px;padding-top:0;">v5</div>
   <div id="user-name-bar" style="margin-top:8px;">
     <div style="display:flex;width:200px;gap:0;margin:0 auto;">
       <input id="user-ini-input" type="text" maxlength="3" placeholder="INI"
@@ -1674,16 +1674,37 @@ function p3Limit(n){ return Math.max(P3_LIM_MIN, P3_LIM_START-P3_LIM_STEP*n); }
 function p3Rand(n){ return Math.floor(Math.random()*n); }
 function p3Word(ask){ return {menor:'Menor',mayor:'Mayor',medio:'Intermedio',dif:'Diferente',igual:'Igual'}[ask]; }
 function p3Ok(d,i){ return Array.isArray(d.ans)?d.ans.indexOf(i)>=0:i===d.ans; }
-/* v3: Normal = cifras 1-9 en estilo de pantalla de 7 segmentos con los segmentos apagados en gris (como un marcador real): 1/7, 3/8/9, 5/6, 2/5 se confunden.
-   Siempre sale al menos una pareja de las que se confunden. */
-var P3_SEG={1:'bc',2:'abged',3:'abgcd',4:'fgbc',5:'afgcd',6:'afgedc',7:'abc',8:'abcdefg',9:'abcdfg'};
+/* v5 (2026-11-16, propuesta C3 elegida por Roberto): Normal = cifras 2-9 de un solo trazo (P3_DIG) cuyos extremos se alargan en
+   rizos en espiral que nacen del propio numero, mas un trazo fino que lo acompana desplazado (eco). El lado hacia el que gira
+   cada rizo sale al azar en cada estimulo. Siempre sale al menos una pareja de las que se confunden (P3_CONF). */
 var P3_CONF=[[3,8],[5,6],[2,5],[8,9],[6,8],[3,9],[4,9],[2,3],[5,9]];
+var P3_DIG={2:'M28 34 C28 14 72 12 72 32 C72 52 40 62 26 82 L74 82',
+  3:'M30 24 C46 10 74 16 70 34 C67 46 54 48 46 49 C62 49 76 58 72 72 C68 88 42 92 28 80',
+  4:'M62 86 L62 14 L24 64 L78 64',
+  5:'M72 16 L38 16 L34 46 C46 38 74 40 74 62 C74 86 44 90 28 78',
+  6:'M70 20 C48 8 28 28 28 58 C28 82 44 88 54 88 C70 88 76 74 74 64 C72 50 56 46 46 50 C38 53 31 60 29 66',
+  7:'M26 16 L74 16 C60 36 50 58 44 86',
+  8:'M50 48 C30 42 31 16 50 14 C69 16 70 42 50 48 C26 54 27 86 50 88 C73 86 74 54 50 48',
+  9:'M72 36 C72 16 48 12 37 21 C26 31 31 50 48 50 C62 50 70 43 72 36 C74 60 66 84 34 86'};
+var P3_ENDS={};
+function p3Ends(n){   /* extremos y direccion de salida del trazo (se mide una vez con un path oculto) */
+  if(P3_ENDS[n]) return P3_ENDS[n];
+  var ns='http://www.w3.org/2000/svg', sv=document.createElementNS(ns,'svg'), p=document.createElementNS(ns,'path');
+  sv.setAttribute('style','position:absolute;width:0;height:0;'); p.setAttribute('d',P3_DIG[n]); sv.appendChild(p); document.body.appendChild(sv);
+  var L=p.getTotalLength(), a=p.getPointAtLength(0), a2=p.getPointAtLength(3), b=p.getPointAtLength(L), b2=p.getPointAtLength(L-3);
+  document.body.removeChild(sv);
+  return P3_ENDS[n]=[{x:a.x,y:a.y,ang:Math.atan2(a.y-a2.y,a.x-a2.x)},{x:b.x,y:b.y,ang:Math.atan2(b.y-b2.y,b.x-b2.x)}];
+}
+function p3Curl(e,side){
+  var x=e.x, y=e.y, h=e.ang, d='M'+x.toFixed(1)+' '+y.toFixed(1), N=44, k, st;
+  for(k=0;k<N;k++){ st=3*(1-k/(N+6)); h+=side*(0.05+0.32*k/N); x+=Math.cos(h)*st; y+=Math.sin(h)*st; d+=' L'+x.toFixed(1)+' '+y.toFixed(1); }
+  return d;
+}
 function p3SegSVG(n){
-  var on=P3_SEG[n], segs={a:[16,4,44,10],g:[16,47,44,10],d:[16,90,44,10],f:[6,12,10,37],b:[60,12,10,37],e:[6,55,10,37],c:[60,55,10,37]}, h='', k, q;
-  for(k in segs){ q=segs[k];
-    h+='<rect x="'+q[0]+'" y="'+q[1]+'" width="'+q[2]+'" height="'+q[3]+'" rx="5" fill="'+(on.indexOf(k)>=0?'#111':'#dcdcdc')+'"/>';
-  }
-  return '<svg viewBox="0 0 76 104" class="p3-seg">'+h+'</svg>';
+  var E=p3Ends(n), h='<path d="'+P3_DIG[n]+'" transform="translate(4 3)" fill="none" stroke="#111" stroke-width="1.4" stroke-linecap="round"/>'
+    +'<path d="'+P3_DIG[n]+'" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>';
+  E.forEach(function(e,i){ if(n===8 && i===1) return; h+='<path d="'+p3Curl(e,Math.random()<0.5?1:-1)+'" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'; });
+  return '<svg viewBox="-6 -6 112 112" class="p3-seg">'+h+'</svg>';
 }
 function p3ShapeSVG(type,s){
   var r=45*s, c=50, h;
