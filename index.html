@@ -412,7 +412,7 @@ if('serviceWorker' in navigator){
           <button class="start-btn rank-btn" ontouchend="event.stopPropagation();" onclick="showRanking()" aria-label="Ranking"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 13.5v7.5M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 4H4v2a3 3 0 0 0 3 3M17 4h3v2a3 3 0 0 1-3 3"/></svg></button>
         </div>
       </div>
-  <div class="app-ver" style="margin-top:6px;padding-top:0;">v9</div>
+  <div class="app-ver" style="margin-top:6px;padding-top:0;">v10</div>
   <div id="user-name-bar" style="margin-top:8px;">
     <div style="display:flex;width:200px;gap:0;margin:0 auto;">
       <input id="user-ini-input" type="text" maxlength="3" placeholder="INI"
@@ -1717,7 +1717,7 @@ function p3Make(mode){
     for(i=0;i<3;i++) items.push(p3SegSVG(vals[i]));
   } else if(kind==='num'){
     while(vals.length<3){ var v=10+p3Rand(90); if(vals.indexOf(v)<0) vals.push(v); }
-    for(i=0;i<3;i++) items.push(mode==='limite'?p3SegSVG(vals[i]):'<span class="p3-num">'+vals[i]+'</span>');   /* v9: en Limite, marcador */
+    for(i=0;i<3;i++) items.push(p3SegSVG(vals[i]));   /* v10: Extremo y Limite, marcador */
   } else if(kind==='fig'){
     var sz=shuffleArr(P3_SIZES.slice()).slice(0,3), t=P3_SHAPES[p3Rand(P3_SHAPES.length)];
     vals=sz; for(i=0;i<3;i++) items.push(p3ShapeSVG(t,sz[i]));
@@ -1891,7 +1891,7 @@ function padHandler(e){
 function p3InfoHTML(mode){
   var h='<div class="info-title">Modo '+(mode==='limite'?'L&iacute;mite':'Extremo')+'</div>'
     +'<div class="info-sub">Salen 3 cuadrados. Arriba se indica cu&aacute;l hay que pulsar:</div>'
-    +'<div class="info-row"><div class="p3-ex">'+(mode==='limite'?p3SegSVG(27):'27')+'</div><div class="info-text"><b>N&uacute;meros</b> (de 2 cifras): '+(mode==='limite'?'el <b>mayor</b>, el <b>menor</b> o el <b>intermedio</b>, seg&uacute;n diga arriba.':'pulsa el <b>menor</b>.')+'</div></div>'
+    +'<div class="info-row"><div class="p3-ex">'+p3SegSVG(27)+'</div><div class="info-text"><b>N&uacute;meros</b> (de 2 cifras): '+(mode==='limite'?'el <b>mayor</b>, el <b>menor</b> o el <b>intermedio</b>, seg&uacute;n diga arriba.':'pulsa el <b>menor</b>.')+'</div></div>'
     +'<div class="info-row"><div class="p3-ex">'+p3ShapeSVG('triangulo',0.6)+'</div><div class="info-text"><b>Figuras</b> (cuadrados, c&iacute;rculos, tri&aacute;ngulos, rombos): '+(mode==='limite'?'la <b>mayor</b>, la <b>menor</b> o la <b>intermedia</b>.':'pulsa la <b>m&aacute;s peque&ntilde;a</b>.')+'</div></div>'
     +'<div class="info-row"><div class="p3-ex"><span class="p3-kan">未</span></div><div class="info-text"><b>Caracteres</b>: dos son iguales y uno tiene una peque&ntilde;a diferencia: '+(mode==='limite'?'pulsa el <b>diferente</b> o uno de los <b>iguales</b>, seg&uacute;n diga arriba.':'pulsa el <b>diferente</b>.')+'</div></div>';
   if(mode==='limite') h+='<div class="info-sub">Empiezas con '+(P3_LIM_START/1000)+' s por est&iacute;mulo y cada acierto te quita '+P3_LIM_STEP+' ms, hasta '+P3_LIM_MIN+' ms. Acaba al fallar o al agotarse el tiempo. Cuenta los aciertos.</div>';
