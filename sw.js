@@ -1,5 +1,5 @@
 /* RDS Processing 3 - Service Worker */
-var CACHE = 'prst3-v12';
+var CACHE = 'prst3-v13';
 var ASSETS = [
   './',
   './index.html',

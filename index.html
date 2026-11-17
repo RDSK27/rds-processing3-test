@@ -412,7 +412,7 @@ if('serviceWorker' in navigator){
           <button class="start-btn rank-btn" ontouchend="event.stopPropagation();" onclick="showRanking()" aria-label="Ranking"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 13.5v7.5M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 4H4v2a3 3 0 0 0 3 3M17 4h3v2a3 3 0 0 1-3 3"/></svg></button>
         </div>
       </div>
-  <div class="app-ver" style="margin-top:6px;padding-top:0;">v12</div>
+  <div class="app-ver" style="margin-top:6px;padding-top:0;">v13</div>
   <div id="user-name-bar" style="margin-top:8px;">
     <div style="display:flex;width:200px;gap:0;margin:0 auto;">
       <input id="user-ini-input" type="text" maxlength="3" placeholder="INI"
@@ -1665,7 +1665,7 @@ function xStop(){
    Limite: los mismos 3 tipos; en numeros y figuras la banda pide MAYOR, MENOR o INTERMEDIO al azar; en caracteres, el DIFERENTE.
             Tiempo por estimulo: P3_LIM_START (5000) ms, 125 ms menos por acierto, minimo P3_LIM_MIN (500). Acaba al fallar o al agotarse
             el tiempo; resultado = aciertos (desempate: media). Sin 15/25/50 ni Con espera (se guarda como cambia/15).
-   Normal y Extremo: un fallo, adivinar (< 200 ms) o tardar mas de P3_SLOW_N / P3_SLOW_X ms anula la partida (pantalla Fallo).
+   Normal y Extremo: un fallo o adivinar (< 200 ms) anula la partida (pantalla Fallo); desde v13 sin tiempo maximo para responder.
    Las funciones de abajo SUSTITUYEN a las del motor de Processing (rojo/azul) del que se copio la app. */
 var P3_LIM_START=5000, P3_LIM_STEP=125, P3_LIM_MIN=500, P3_SLOW_N=3000, P3_SLOW_X=4000, P3_GAP=300;
 var P3_SHAPES=['cuadrado','circulo','triangulo','rombo'];
@@ -1823,9 +1823,8 @@ function showStim(){
   S.stimVisible=true; S.armed=false;
   S.trialT0=performance.now();
   if(S.limitTo){ clearTimeout(S.limitTo); }
-  var tmo=S.mode==='limite'?p3Limit(S.trial):(S.mode==='extremo'?P3_SLOW_X:P3_SLOW_N);
-  if(S.mode==='limite') p3LimBar(tmo);
-  S.limitTo=setTimeout(onStimTimeout, tmo+(S.mode==='limite'?150:0));
+  /* v13 (Roberto): en Normal y Extremo ya no hay tiempo máximo para responder; solo en Límite */
+  if(S.mode==='limite'){ var tmo=p3Limit(S.trial); p3LimBar(tmo); S.limitTo=setTimeout(onStimTimeout, tmo+150); }
 }
 function onStimTimeout(){
   if(S.limitTo){ clearTimeout(S.limitTo); S.limitTo=0; }
