@@ -412,7 +412,7 @@ if('serviceWorker' in navigator){
           <button class="start-btn rank-btn" ontouchend="event.stopPropagation();" onclick="showRanking()" aria-label="Ranking"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 13.5v7.5M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 4H4v2a3 3 0 0 0 3 3M17 4h3v2a3 3 0 0 1-3 3"/></svg></button>
         </div>
       </div>
-  <div class="app-ver" style="margin-top:6px;padding-top:0;">v14</div>
+  <div class="app-ver" style="margin-top:6px;padding-top:0;">v15</div>
   <div id="user-name-bar" style="margin-top:8px;">
     <div style="display:flex;width:200px;gap:0;margin:0 auto;">
       <input id="user-ini-input" type="text" maxlength="3" placeholder="INI"
@@ -1669,7 +1669,10 @@ function xStop(){
    Las funciones de abajo SUSTITUYEN a las del motor de Processing (rojo/azul) del que se copio la app. */
 var P3_LIM_START=5000, P3_LIM_STEP=125, P3_LIM_MIN=500, P3_SLOW_N=3000, P3_SLOW_X=4000, P3_GAP=300;
 var P3_SHAPES=['cuadrado','circulo','triangulo','rombo'];
-var P3_SIZES=[0.40,0.52,0.64,0.76,0.88];
+var P3_SIZES=[0.40,0.52,0.64,0.76,0.88];   /* ya no se usa (v15) */
+/* v15 (2026-11-18, Roberto: en Extremo las figuras eran demasiado faciles): las 3 figuras se diferencian solo un P3_FIG_STEP
+   del tamano (antes un 12 % o mas), a partir de un tamano base al azar, para que cueste distinguir cual es mayor o menor. */
+var P3_FIG_STEP=0.05;
 /* parejas de caracteres casi iguales (kanji/hanzi y katakana) */
 var P3_PAIRS=[['未','末'],['土','士'],['己','已'],['人','入'],['大','犬'],['大','太'],['王','玉'],['日','曰'],['千','干'],['刀','力'],['木','本'],['白','自'],['鳥','烏'],['天','夫'],['田','由'],['田','甲'],['問','間'],['待','持'],['休','体'],['午','牛'],['失','矢'],['貝','見'],['住','往'],['矛','予'],['折','析'],['シ','ツ'],['ソ','ン'],['ク','ケ'],['チ','テ'],['ワ','ウ']];
 function isX2(){ return false; }   /* Processing 3 no tiene x2 (de momento) */
@@ -1719,7 +1722,7 @@ function p3Make(mode){
     while(vals.length<3){ var v=10+p3Rand(90); if(vals.indexOf(v)<0) vals.push(v); }
     for(i=0;i<3;i++) items.push(p3SegSVG(vals[i]));   /* v10: Extremo y Limite, marcador */
   } else if(kind==='fig'){
-    var sz=shuffleArr(P3_SIZES.slice()).slice(0,3), t=P3_SHAPES[p3Rand(P3_SHAPES.length)];
+    var b0=0.62+Math.random()*0.14, sz=shuffleArr([b0, b0+P3_FIG_STEP, b0+2*P3_FIG_STEP]), t=P3_SHAPES[p3Rand(P3_SHAPES.length)];
     vals=sz; for(i=0;i<3;i++) items.push(p3ShapeSVG(t,sz[i]));
   } else {
     var pr=P3_PAIRS[p3Rand(P3_PAIRS.length)], odd=p3Rand(2), same=pr[1-odd], diff=pr[odd];
