@@ -412,7 +412,7 @@ if('serviceWorker' in navigator){
           <button class="start-btn rank-btn" ontouchend="event.stopPropagation();" onclick="showRanking()" aria-label="Ranking"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 13.5v7.5M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 4H4v2a3 3 0 0 0 3 3M17 4h3v2a3 3 0 0 1-3 3"/></svg></button>
         </div>
       </div>
-  <div class="app-ver" style="margin-top:6px;padding-top:0;">v15</div>
+  <div class="app-ver" style="margin-top:6px;padding-top:0;">v16</div>
   <div id="user-name-bar" style="margin-top:8px;">
     <div style="display:flex;width:200px;gap:0;margin:0 auto;">
       <input id="user-ini-input" type="text" maxlength="3" placeholder="INI"
@@ -1706,6 +1706,23 @@ function p3ShapeSVG(type,s){
   return '<svg viewBox="0 0 100 100" class="p3-svg">'+h+'</svg>';
 }
 /* un estimulo: {kind, ask, items:[html x3], ans: indice correcto} */
+/* v16 (2026-11-18, Roberto: en Extremo los numeros eran lo mas facil): en Extremo los 3 numeros de 2 cifras se forman con cifras
+   que se confunden en el marcador (P3_CONF). La mitad de las veces comparten la decena y solo cambian las unidades (p. ej. 53 58 59);
+   la otra mitad se mezclan las dos cifras de una pareja (p. ej. 38 83 88). Limite sigue con numeros al azar de 10 a 99. */
+function p3HardNums(){
+  var cp=P3_CONF[p3Rand(P3_CONF.length)], a=cp[0], b=cp[1], out=[], i;
+  if(Math.random()<0.5){
+    var near=[]; P3_CONF.forEach(function(q){ [0,1].forEach(function(j){ var o=q[1-j]; if((q[j]===a||q[j]===b) && o!==a && o!==b && near.indexOf(o)<0) near.push(o); }); });
+    var c=near.length?near[p3Rand(near.length)]:2+p3Rand(8), t;
+    if(c===a||c===b){ do{ c=2+p3Rand(8); }while(c===a||c===b); }
+    t=2+p3Rand(8);
+    out=[t*10+a, t*10+b, t*10+c];
+  } else {
+    var all=shuffleArr([a*10+a, a*10+b, b*10+a, b*10+b]);
+    out=all.slice(0,3);
+  }
+  return shuffleArr(out);
+}
 function p3Make(mode){
   var kind='num';
   if(mode!=='normal'){ var k=p3Rand(3); kind=k===0?'num':(k===1?'fig':'kan'); }
@@ -1719,7 +1736,8 @@ function p3Make(mode){
     vals=shuffleArr(vals);
     for(i=0;i<3;i++) items.push(p3SegSVG(vals[i]));
   } else if(kind==='num'){
-    while(vals.length<3){ var v=10+p3Rand(90); if(vals.indexOf(v)<0) vals.push(v); }
+    if(mode==='extremo') vals=p3HardNums();
+    else while(vals.length<3){ var v=10+p3Rand(90); if(vals.indexOf(v)<0) vals.push(v); }
     for(i=0;i<3;i++) items.push(p3SegSVG(vals[i]));   /* v10: Extremo y Limite, marcador */
   } else if(kind==='fig'){
     var b0=0.62+Math.random()*0.14, sz=shuffleArr([b0, b0+P3_FIG_STEP, b0+2*P3_FIG_STEP]), t=P3_SHAPES[p3Rand(P3_SHAPES.length)];
