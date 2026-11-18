@@ -412,7 +412,7 @@ if('serviceWorker' in navigator){
           <button class="start-btn rank-btn" ontouchend="event.stopPropagation();" onclick="showRanking()" aria-label="Ranking"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 13.5v7.5M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 4H4v2a3 3 0 0 0 3 3M17 4h3v2a3 3 0 0 1-3 3"/></svg></button>
         </div>
       </div>
-  <div class="app-ver" style="margin-top:6px;padding-top:0;">v13</div>
+  <div class="app-ver" style="margin-top:6px;padding-top:0;">v14</div>
   <div id="user-name-bar" style="margin-top:8px;">
     <div style="display:flex;width:200px;gap:0;margin:0 auto;">
       <input id="user-ini-input" type="text" maxlength="3" placeholder="INI"
@@ -1659,8 +1659,8 @@ function xStop(){
 
 /* ================== PROCESSING 3 (2026-11-16): motor propio ==================
    Salen 3 cuadrados y hay que pulsar el que pide la banda de arriba. Mide el tiempo de reaccion (desde que salen hasta pulsar).
-   Normal: 3 numeros de 2 cifras distintos -> el MENOR.
-   Extremo: cada estimulo es al azar uno de 3 tipos: numeros (el MENOR), figuras simples iguales de distinto tamano (la MENOR)
+   Normal: 3 numeros distintos -> desde v14 el MAYOR, el MENOR o el INTERMEDIO, segun diga la banda.
+   Extremo: cada estimulo es al azar uno de 3 tipos: numeros y figuras simples iguales de distinto tamano (desde v14 MAYOR, MENOR o INTERMEDIO)
             o caracteres japoneses/chinos: dos iguales y uno casi igual (el DIFERENTE).
    Limite: los mismos 3 tipos; en numeros y figuras la banda pide MAYOR, MENOR o INTERMEDIO al azar; en caracteres, el DIFERENTE.
             Tiempo por estimulo: P3_LIM_START (5000) ms, 125 ms menos por acierto, minimo P3_LIM_MIN (500). Acaba al fallar o al agotarse
@@ -1708,7 +1708,7 @@ function p3Make(mode){
   if(mode!=='normal'){ var k=p3Rand(3); kind=k===0?'num':(k===1?'fig':'kan'); }
   var ask='menor';
   if(kind==='kan') ask=(mode==='limite' && Math.random()<0.5)?'igual':'dif';
-  else if(mode==='limite') ask=['menor','mayor','medio'][p3Rand(3)];
+  else ask=['menor','mayor','medio'][p3Rand(3)];   /* v14 (Roberto): también en Normal y Extremo, números y figuras piden mayor, menor o intermedio */
   var vals=[], i, items=[], ans;
   if(kind==='num' && mode==='normal'){
     var cp=P3_CONF[p3Rand(P3_CONF.length)]; vals=cp.slice();
@@ -1817,8 +1817,8 @@ function showStim(){
   S.coverTo=0;
   var d=p3Make(S.mode); S.curDesc=d;
   var box=$('stimBox'), lim=S.mode==='limite';
-  box.className='stim-box p3-word'+(lim?' p3-on':'');   /* v3: Normal y Extremo siempre piden el menor (o el diferente): sin palabra */
-  $('stimGlyph').textContent=lim?p3Word(d.ask):'';
+  box.className='stim-box p3-word p3-on';   /* v14: la banda dice siempre qué pulsar (mayor, menor, intermedio, diferente…) en los 3 modos */
+  $('stimGlyph').textContent=p3Word(d.ask);
   p3Squares(d.items);
   S.stimVisible=true; S.armed=false;
   S.trialT0=performance.now();
@@ -1890,8 +1890,8 @@ function padHandler(e){
 function p3InfoHTML(mode){
   var h='<div class="info-title">Modo '+(mode==='limite'?'L&iacute;mite':'Extremo')+'</div>'
     +'<div class="info-sub">Salen 3 cuadrados. Arriba se indica cu&aacute;l hay que pulsar:</div>'
-    +'<div class="info-row"><div class="p3-ex">'+p3SegSVG(27)+'</div><div class="info-text"><b>N&uacute;meros</b> (de 2 cifras): '+(mode==='limite'?'el <b>mayor</b>, el <b>menor</b> o el <b>intermedio</b>, seg&uacute;n diga arriba.':'pulsa el <b>menor</b>.')+'</div></div>'
-    +'<div class="info-row"><div class="p3-ex">'+p3ShapeSVG('triangulo',0.6)+'</div><div class="info-text"><b>Figuras</b> (cuadrados, c&iacute;rculos, tri&aacute;ngulos, rombos): '+(mode==='limite'?'la <b>mayor</b>, la <b>menor</b> o la <b>intermedia</b>.':'pulsa la <b>m&aacute;s peque&ntilde;a</b>.')+'</div></div>'
+    +'<div class="info-row"><div class="p3-ex">'+p3SegSVG(27)+'</div><div class="info-text"><b>N&uacute;meros</b> (de 2 cifras): '+'el <b>mayor</b>, el <b>menor</b> o el <b>intermedio</b>, seg&uacute;n diga arriba.'+'</div></div>'
+    +'<div class="info-row"><div class="p3-ex">'+p3ShapeSVG('triangulo',0.6)+'</div><div class="info-text"><b>Figuras</b> (cuadrados, c&iacute;rculos, tri&aacute;ngulos, rombos): '+'la <b>mayor</b>, la <b>menor</b> o la <b>intermedia</b>, seg&uacute;n diga arriba.'+'</div></div>'
     +'<div class="info-row"><div class="p3-ex"><span class="p3-kan">未</span></div><div class="info-text"><b>Caracteres</b>: dos son iguales y uno tiene una peque&ntilde;a diferencia: '+(mode==='limite'?'pulsa el <b>diferente</b> o uno de los <b>iguales</b>, seg&uacute;n diga arriba.':'pulsa el <b>diferente</b>.')+'</div></div>';
   if(mode==='limite') h+='<div class="info-sub">Empiezas con '+(P3_LIM_START/1000)+' s por est&iacute;mulo y cada acierto te quita '+P3_LIM_STEP+' ms, hasta '+P3_LIM_MIN+' ms. Acaba al fallar o al agotarse el tiempo. Cuenta los aciertos.</div>';
   else h+='<div class="info-sub">Un fallo anula la partida.</div>';
