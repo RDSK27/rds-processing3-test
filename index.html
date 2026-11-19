@@ -363,7 +363,7 @@ if('serviceWorker' in navigator){
   .p3-seg{width:52%;height:80%;}
   .p3-seg2{width:86%;height:72%;}
   .p3-ex .p3-seg{width:40%;height:74%;} .p3-ex .p3-seg2{width:84%;height:62%;}
-  #p3Preload{position:absolute;left:-9999px;top:0;opacity:0;pointer-events:none;}
+  .p3-kanc{width:64px;height:64px;display:block;pointer-events:none;}
   .p3-ex{flex:none;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border:3px solid var(--negro);border-radius:10px;background:#fff;font:900 26px Arial,sans-serif;}
   .p3-ex .p3-kan{font-size:34px;}
 </style>
@@ -412,7 +412,7 @@ if('serviceWorker' in navigator){
           <button class="start-btn rank-btn" ontouchend="event.stopPropagation();" onclick="showRanking()" aria-label="Ranking"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 13.5v7.5M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 4H4v2a3 3 0 0 0 3 3M17 4h3v2a3 3 0 0 1-3 3"/></svg></button>
         </div>
       </div>
-  <div class="app-ver" style="margin-top:6px;padding-top:0;">v17</div>
+  <div class="app-ver" style="margin-top:6px;padding-top:0;">v18</div>
   <div id="user-name-bar" style="margin-top:8px;">
     <div style="display:flex;width:200px;gap:0;margin:0 auto;">
       <input id="user-ini-input" type="text" maxlength="3" placeholder="INI"
@@ -1744,7 +1744,7 @@ function p3Make(mode){
   } else {
     var pr=P3_PAIRS[p3Rand(P3_PAIRS.length)], odd=p3Rand(2), same=pr[1-odd], diff=pr[odd];
     ans=p3Rand(3);
-    for(i=0;i<3;i++) items.push('<span class="p3-kan">'+(i===ans?diff:same)+'</span>');
+    for(i=0;i<3;i++) items.push(p3KanHTML(i===ans?diff:same));
     if(ask==='igual') ans=[0,1,2].filter(function(j){ return j!==ans; });   /* vale cualquiera de las dos iguales */
     return {kind:kind, ask:ask, items:items, ans:ans};
   }
@@ -1753,9 +1753,35 @@ function p3Make(mode){
   ans=vals.indexOf(want);
   return {kind:kind, ask:ask, items:items, ans:ans};
 }
+/* v18 (2026-11-19, Roberto: en el movil, en Extremo, "se traba, el tiempo se detiene y al pulsar no responde"; antes ya paso en Limite):
+   los caracteres japoneses/chinos ya no se escriben como texto durante el juego. La fuente CJK del movil es enorme y dibujar cada
+   caracter nuevo a 56 px podia bloquear la pantalla. Se dibujan UNA vez al cargar la app en lienzos (canvas) y en el juego solo se
+   copian (drawImage), sin tocar la fuente. Mismo tamano y color que antes (.p3-kan, 56 px, #111). */
+var P3_KAN_FONT='400 56px "Hiragino Sans","Noto Sans CJK JP","Noto Sans JP","Yu Gothic","PingFang SC","Microsoft YaHei",sans-serif';
+var P3_KAN_PX=64, p3KanSrc={};
+function p3KanDraw(ch){
+  var c=p3KanSrc[ch]; if(c) return c;
+  var r=Math.max(1,Math.min(3,window.devicePixelRatio||1)), n=Math.round(P3_KAN_PX*r);
+  c=document.createElement('canvas'); c.width=n; c.height=n;
+  var x=c.getContext('2d');
+  x.scale(r,r); x.font=P3_KAN_FONT; x.fillStyle='#111'; x.textAlign='center'; x.textBaseline='middle';
+  x.fillText(ch, P3_KAN_PX/2, P3_KAN_PX/2);
+  p3KanSrc[ch]=c; return c;
+}
+function p3KanHTML(ch){ return '<canvas class="p3-kanc" data-ch="'+ch+'"></canvas>'; }
+function p3KanFill(root){
+  var cs=root.querySelectorAll('canvas.p3-kanc'), i, s, ctx;
+  for(i=0;i<cs.length;i++){
+    s=p3KanDraw(cs[i].getAttribute('data-ch'));
+    cs[i].width=s.width; cs[i].height=s.height;
+    ctx=cs[i].getContext('2d'); if(ctx) ctx.drawImage(s,0,0);
+  }
+}
+function p3KanPreload(){ var i=0; (function next(){ var t=performance.now(); while(i<P3_PAIRS.length && performance.now()-t<8){ p3KanDraw(P3_PAIRS[i][0]); p3KanDraw(P3_PAIRS[i][1]); i++; } if(i<P3_PAIRS.length) setTimeout(next,30); })(); }
 function p3Squares(items){
   var b=document.querySelectorAll('#pad .p3-sq'), i;
   for(i=0;i<b.length;i++){ b[i].innerHTML=items?items[i]:''; b[i].classList.toggle('on',!!items); }
+  if(items && items[0].indexOf('p3-kanc')>=0) p3KanFill($('pad'));
 }
 function hideStim(){
   var box=$('stimBox'); if(box){ box.className='stim-box p3-word'; }
@@ -1954,7 +1980,8 @@ function showRanking(){
 }
 
 $('segModo').addEventListener('click', p3ModeUI); p3ModeUI();
-(function(){ var d=document.createElement('div'); d.id='p3Preload'; d.className='p3-kan'; d.textContent=P3_PAIRS.map(function(p){ return p[0]+p[1]; }).join(' '); document.body.appendChild(d); })();   /* precarga la fuente de los caracteres antes de jugar */
+/* v18: los caracteres se dibujan en lienzos poco a poco al cargar (antes: un texto oculto #p3Preload, que no evitaba el coste de dibujarlos en el juego) */
+if(document.readyState==='complete') setTimeout(p3KanPreload,300); else window.addEventListener('load', function(){ setTimeout(p3KanPreload,300); });
 
 function unlockAudio(){ audioCtx(); document.removeEventListener('touchstart',unlockAudio); document.removeEventListener('mousedown',unlockAudio); }
 document.addEventListener('touchstart',unlockAudio,{passive:true});
