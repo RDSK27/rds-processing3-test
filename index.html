@@ -364,6 +364,13 @@ if('serviceWorker' in navigator){
   .p3-seg2{width:86%;height:72%;}
   .p3-ex .p3-seg{width:40%;height:74%;} .p3-ex .p3-seg2{width:84%;height:62%;}
   .p3-kanc{width:64px;height:64px;display:block;pointer-events:none;}
+  /* v19: modo x2 (cada mitad: banda con la palabra + 3 cuadrados) */
+  .p3-xw{flex:none;height:42px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;background:#111;color:#fff;border-radius:6px;font:900 24px Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;}
+  .p3-xw:empty{background:#ececec;}
+  .pad.p3-xpad{flex:1;min-height:0;gap:8px;}
+  .p3-xpad .p3-sq svg,.p3-xpad .p3-sq canvas{pointer-events:none;}
+  .p3-sq.p3-ok{border-color:#1a9a3a;background:#e4f5e8;}
+  .p3-sq.p3-bad{border-color:var(--rojo);background:#fdecea;}
   .p3-ex{flex:none;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border:3px solid var(--negro);border-radius:10px;background:#fff;font:900 26px Arial,sans-serif;}
   .p3-ex .p3-kan{font-size:34px;}
 </style>
@@ -390,6 +397,7 @@ if('serviceWorker' in navigator){
       <button class="sel" data-v="normal">Normal</button>
       <button data-v="extremo">Extremo</button>
       <button data-v="limite">L&#237;mite</button>
+      <button data-v="x2">x2</button>
     </div>
 
     <div class="segment" id="segEstimulo">
@@ -412,7 +420,7 @@ if('serviceWorker' in navigator){
           <button class="start-btn rank-btn" ontouchend="event.stopPropagation();" onclick="showRanking()" aria-label="Ranking"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 13.5v7.5M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 4H4v2a3 3 0 0 0 3 3M17 4h3v2a3 3 0 0 1-3 3"/></svg></button>
         </div>
       </div>
-  <div class="app-ver" style="margin-top:6px;padding-top:0;">v18</div>
+  <div class="app-ver" style="margin-top:6px;padding-top:0;">v19</div>
   <div id="user-name-bar" style="margin-top:8px;">
     <div style="display:flex;width:200px;gap:0;margin:0 auto;">
       <input id="user-ini-input" type="text" maxlength="3" placeholder="INI"
@@ -463,9 +471,11 @@ if('serviceWorker' in navigator){
     <div class="x2-zone x2-top" id="x2z1">
       <div class="x2-info"><span class="x2-pts"></span><span class="x2-who"></span><span class="x2-gm"></span></div>
       <div class="x2-area">
-        <div class="pad">
-          <div class="pad-half pad-red" data-p="1" data-pos="izq"><span>Rojo</span></div>
-          <div class="pad-half pad-blue" data-p="1" data-pos="dcha"><span>Azul</span></div>
+        <div class="p3-xw"></div>
+        <div class="pad p3-pad p3-xpad">
+          <button type="button" class="p3-sq" data-p="1" data-i="0"></button>
+          <button type="button" class="p3-sq" data-p="1" data-i="1"></button>
+          <button type="button" class="p3-sq" data-p="1" data-i="2"></button>
         </div>
         <div class="x2-flash"></div>
         <div class="x2-panel"></div>
@@ -478,9 +488,11 @@ if('serviceWorker' in navigator){
     <div class="x2-zone x2-bot" id="x2z0">
       <div class="x2-info"><span class="x2-pts"></span><span class="x2-who"></span><span class="x2-gm"></span></div>
       <div class="x2-area">
-        <div class="pad">
-          <div class="pad-half pad-red" data-p="0" data-pos="izq"><span>Rojo</span></div>
-          <div class="pad-half pad-blue" data-p="0" data-pos="dcha"><span>Azul</span></div>
+        <div class="p3-xw"></div>
+        <div class="pad p3-pad p3-xpad">
+          <button type="button" class="p3-sq" data-p="0" data-i="0"></button>
+          <button type="button" class="p3-sq" data-p="0" data-i="1"></button>
+          <button type="button" class="p3-sq" data-p="0" data-i="2"></button>
         </div>
         <div class="x2-flash"></div>
         <div class="x2-panel"></div>
@@ -1675,7 +1687,6 @@ var P3_SIZES=[0.40,0.52,0.64,0.76,0.88];   /* ya no se usa (v15) */
 var P3_FIG_STEP=0.05;
 /* parejas de caracteres casi iguales (kanji/hanzi y katakana) */
 var P3_PAIRS=[['未','末'],['土','士'],['己','已'],['人','入'],['大','犬'],['大','太'],['王','玉'],['日','曰'],['千','干'],['刀','力'],['木','本'],['白','自'],['鳥','烏'],['天','夫'],['田','由'],['田','甲'],['問','間'],['待','持'],['休','体'],['午','牛'],['失','矢'],['貝','見'],['住','往'],['矛','予'],['折','析'],['シ','ツ'],['ソ','ン'],['ク','ケ'],['チ','テ'],['ワ','ウ']];
-function isX2(){ return false; }   /* Processing 3 no tiene x2 (de momento) */
 function p3Limit(n){ return Math.max(P3_LIM_MIN, P3_LIM_START-P3_LIM_STEP*n); }
 function p3Rand(n){ return Math.floor(Math.random()*n); }
 function p3Word(ask){ return {menor:'Menor',mayor:'Mayor',medio:'Intermedio',dif:'Diferente',igual:'Igual'}[ask]; }
@@ -1944,8 +1955,67 @@ function p3InfoHTML(mode){
   return h;
 }
 function showExtremoInfo(){ var sc=$('extremo-info').querySelector('.info-scroll'); if(sc){ sc.innerHTML=p3InfoHTML(S.mode); sc.scrollTop=0; } show('extremo-info'); }
-function p3ModeUI(){   /* Limite: sin Con espera ni 15/25/50 */
-  var lim=selVal('segModo')==='limite';
+/* ================== x2 de Processing 3 (v19, 2026-11-19, pedido de Roberto) ==================
+   Interruptor amarillo x2 en la fila de modos, con Normal o Extremo (Limite, Estimulo y Ensayos atenuados). Se reutiliza el marco x2 heredado de
+   Processing (opciones de partido, semaforo, marcador Puntos/Jugador/Sets, paneles, Empezar/Continuar por los dos, set a 10).
+   Cada mitad tiene su banda con la palabra y los MISMOS 3 cuadrados (la mitad de arriba girada: cada uno los ve de frente en el mismo orden).
+   Tras una espera de 0,8-2 s salen a la vez en las dos mitades; el primero que pulsa el correcto +1; si pulsa uno equivocado -1 y +1 al rival.
+   Tras la primera pulsacion se marca el correcto (verde) y el fallado (rojo) 1 s y se ignora todo. Pulsar con los cuadrados vacios no cuenta.
+   Decisiones mias: sin salida en falso ni regla de adivinar; sin limite de tiempo por estimulo; sin ranking. */
+function xSides(){}
+function xGameSetup(){ X.cur=null; }
+function xSq(p){ return $('x2z'+p).querySelectorAll('.p3-sq'); }
+function xWord(t){ for(var p=0;p<2;p++) $('x2z'+p).querySelector('.p3-xw').textContent=t||''; }
+function xSquares(items){
+  for(var p=0;p<2;p++){
+    var b=xSq(p), i;
+    for(i=0;i<b.length;i++){ b[i].innerHTML=items?items[i]:''; b[i].classList.toggle('on',!!items); b[i].classList.remove('p3-ok','p3-bad'); }
+    if(items && items[0].indexOf('p3-kanc')>=0) p3KanFill($('x2z'+p));
+  }
+}
+function xReset(){ xClear(); X.pts=[0,0]; X.games=[0,0]; X.gameNo=1; X.n=0; X.hist=[]; xPanelsOff(); xFlash(); xStim(); xSquares(null); xWord(''); }
+function startX2(){
+  if(!x2OptsGate(startX2)) return;
+  X.mode=selVal('segModo')==='extremo'?'extremo':'normal';
+  xReset(); X.on=false; X.state='intro'; X.ready=[false,false];
+  show('x2'); $('x2Stop').style.display='block'; xRender();
+  var ext=X.mode==='extremo';
+  for(var p=0;p<2;p++) xPanel(p,'<div class="x2-pt">Jugador '+(p+1)+(ext?' &middot; Extremo':'')+'</div>'
+    +'<div class="x2-pr">'+x2RulesText()+'</div>'
+    +'<div class="x2-rules">Salen los mismos 3 cuadrados a los dos. Pulsa el que pide tu banda: '+(ext?'<b>mayor</b>, <b>menor</b> o <b>intermedio</b> (n&uacute;meros y figuras) o el <b>diferente</b> (caracteres)':'el <b>mayor</b>, el <b>menor</b> o el <b>intermedio</b>')+'. El primero que acierta +1; si fallas, &minus;1 y +1 para el rival.</div>'
+    +xBtn('start','Empezar'));
+}
+function xNext(){
+  xStim(); xSquares(null); xWord('');
+  X.state='wait';
+  X.to=setTimeout(function(){
+    X.to=0; if(!X.on) return;
+    var d=p3Make(X.mode); X.cur=d;
+    xWord(p3Word(d.ask)); xSquares(d.items);
+    X.state='stim'; X.n++; X.t0=performance.now(); xRender();
+  }, 800+Math.random()*1200);
+}
+function xPress(p,i){
+  if(!X.on || X.state!=='stim' || !X.cur) return;
+  var now=performance.now(), ok=p3Ok(X.cur,i), win, msg=['',''], q, k;
+  if(ok){ X.pts[p]++; win=p; msg[p]='Punto &middot; '+Math.round(now-X.t0)+' ms'; msg[1-p]='Punto rival'; }
+  else { X.pts[p]--; X.pts[1-p]++; win=1-p; msg[p]='Fallo -1'; msg[win]='Fallo rival +1'; }
+  X.state='freeze';
+  var good=Array.isArray(X.cur.ans)?X.cur.ans:[X.cur.ans];
+  for(q=0;q<2;q++){ var b=xSq(q); for(k=0;k<good.length;k++) b[good[k]].classList.add('p3-ok'); }
+  if(!ok) xSq(p)[i].classList.add('p3-bad');
+  xFlash(msg[0],msg[1]);
+  if(win===p) sndSymbol(); else sndFail();
+  xRender();
+  X.to=setTimeout(function(){ X.to=0; xFlash(); xAfter(); }, X_FREEZE);
+}
+$('x2').addEventListener('pointerdown', function(e){
+  var sq=e.target.closest ? e.target.closest('.p3-sq') : null; if(!sq || !sq.hasAttribute('data-p')) return;
+  if(e.cancelable) e.preventDefault();
+  xPress(parseInt(sq.getAttribute('data-p'),10), parseInt(sq.getAttribute('data-i'),10));
+}, {passive:false});
+function p3ModeUI(){   /* Limite: sin Con espera ni 15/25/50; x2 (v19): tampoco */
+  var lim=selVal('segModo')==='limite' || isX2();
   $('segEstimulo').classList.toggle('off',lim); $('segEnsayos').classList.toggle('off',lim);
 }
 function p3RankUI(){
@@ -1960,6 +2030,7 @@ function rankFromSel(){
   renderRank(mode,stim,total);
 }
 function startGame(){
+  if(isX2()){ startX2(); return; }   /* v19: dos jugadores, sin ranking */
   S.mode=selVal('segModo')||'normal';
   S.stim=S.mode==='limite'?'cambia':(selVal('segEstimulo')||'cambia');
   S.total=S.mode==='limite'?15:parseInt(selVal('segEnsayos')||'15',10);
